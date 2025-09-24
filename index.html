@@ -39,8 +39,7 @@ form.addEventListener('submit', async (e) => {
   const q = qInput.value.trim();
   if(!q) return;
   results.innerHTML = '検索中...';
-  // サーバーURL を自分の Render ドメインに置き換えてください
-  const base = 'https://あなたの-render-app.onrender.com';
+  const base = 'https://youtubemusicproxy.onrender.com';
   const endpoint = base + '/search?q=' + encodeURIComponent(q) + '&music=' + (useMusic.checked ? '1' : '0');
   try {
     const r = await fetch(endpoint);
