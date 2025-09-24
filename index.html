@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Proxy Search — YouTube</title>
+  <style>
+    body{font-family:system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", Arial; padding:16px; max-width:900px; margin:auto;}
+    #results {margin-top:12px;}
+    .item {display:flex; gap:10px; padding:8px; border-bottom:1px solid #eee; cursor:pointer; align-items:center;}
+    .thumb {width:120px; height:68px; object-fit:cover;}
+    .meta {flex:1;}
+    iframe {width:100%; height:60vh; border:1px solid #ddd; margin-top:12px;}
+  </style>
+</head>
+<body>
+  <h1>Proxy Search</h1>
+  <form id="form">
+    <input id="q" type="search" placeholder="曲名・アーティストで検索" style="width:70%" required>
+    <button>検索</button>
+    <label style="margin-left:8px;">
+      <input id="useMusic" type="checkbox"> YouTube Music (試す)
+    </label>
+  </form>
+
+  <div id="results"></div>
+
+  <iframe id="viewer" src=""></iframe>
+
+<script>
+const form = document.getElementById('form');
+const qInput = document.getElementById('q');
+const results = document.getElementById('results');
+const viewer = document.getElementById('viewer');
+const useMusic = document.getElementById('useMusic');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const q = qInput.value.trim();
+  if(!q) return;
+  results.innerHTML = '検索中...';
+  // サーバーURL を自分の Render ドメインに置き換えてください
+  const base = 'https://あなたの-render-app.onrender.com';
+  const endpoint = base + '/search?q=' + encodeURIComponent(q) + '&music=' + (useMusic.checked ? '1' : '0');
+  try {
+    const r = await fetch(endpoint);
+    if(!r.ok) throw new Error(await r.text());
+    const data = await r.json();
+    if(!Array.isArray(data.items)) { results.innerText = '検索結果が不正です'; return; }
+    results.innerHTML = '';
+    data.items.forEach(it => {
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `
+        <img class="thumb" src="${it.thumbnail || ''}" />
+        <div class="meta">
+          <div class="title">${it.title}</div>
+          <div class="channel" style="font-size:0.9em;color:#666">${it.channel || ''}</div>
+        </div>
+      `;
+      div.addEventListener('click', () => {
+        // proxy 経由で開く。proxy に直接動画URLを渡す
+        const target = it.url;
+        viewer.src = base + '/proxy?url=' + encodeURIComponent(target);
+      });
+      results.appendChild(div);
+    });
+  } catch(err) {
+    results.innerText = '検索エラー: ' + err.message;
+  }
+});
+</script>
+</body>
+</html>
